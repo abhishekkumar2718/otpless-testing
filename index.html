@@ -87,11 +87,10 @@
         const initiate = await hitOTPlessSdk({
             requestType: "initiate",
             request: {
-                channel: 'OAUTH',
-                provider: 'WHATSAPP',
-                phone: '9131568042',
-                countryCode: '+91',
-                redirectUri: 'https://otpless-testing.tiiny.site/'
+                channel: 'PHONE',
+                phone: input.value, // Use the phone number the user entered
+                countryCode: "+91", // Country code for India
+                
             }
         });
 
@@ -101,6 +100,8 @@
         const otpSection = document.getElementById('otp-section');
         otpSection.style.display = "block";
     }
+
+
 
     // Function to verify the OTP entered by the user
     async function verify() {
