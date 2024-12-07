@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Set up the character encoding and viewport for mobile-friendliness -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activate OTP-less Sign-in</title>
+</head>
+
+<!-- Input section for the user to enter their mobile number and request an OTP -->
+<div>
+    <input id="mobile-input" placeholder="Enter your mobile number" />
+    <button onclick="initiate()">Request OTP</button>
+</div>
+
+<!-- OTP input section, hidden initially, with a button to verify the entered OTP -->
+<div id="otp-section" style="display: none;">
+    <input id="otp-input" placeholder="Enter OTP" />
+    <button onclick="verify()">Verify OTP</button>
+</div>
+
+
+
+<!-- Script to load and initialize the OTP-less SDK -->
+<script>
+    // Variable to hold the OTP-less sign-in object after SDK loads
+    let OTPlessSignin = null;
+
+    // Function to load the OTP-less SDK script
+    async function OTPlessSdk() {
+        return new Promise(async function (resolve) {
+
+            // If the SDK is already loaded and initialized, do nothing
+            if (document.getElementById('otpless-sdk') && OTPlessSignin) return resolve();
+
+            // Create a script element to load the OTP-less SDK
+            const script = document.createElement('script');
+            script.src = "https://otpless.tech/v3/headless.js"; // URL of the SDK script
+            script.id = "otpless-sdk"; // Give the script an ID
+            script.setAttribute('data-appid', 'EK2S7JJ497BL4HELPAAU'); // Set your app ID for SDK configuration
+
+            // When the script loads, initialize OTPlessSignin and resolve the promise
+            script.onload = function () {
+                const OTPless = window["OTPless"]; // Access the OTPless object in the global scope
+                OTPlessSignin = new OTPless(callback); // Set OTPlessSignin to a new OTPless instance
+                resolve(); // Finish the promise
+            };
+
+            // Add the script to the head of the document to load it
+            document.head.appendChild(script);
+        });
+    }
+
+    // Function to interact with OTPlessSignin for different requests (like initiate, verify, etc.)
+    async function hitOTPlessSdk(params) {
+        await OTPlessSdk(); // Make sure SDK is loaded
+
+        // Get request type and details from the parameters
+        const requestType = params.requestType;
+        const request = params.request;
+
+        // Call the appropriate function on OTPlessSignin and pass the request details
+        return await OTPlessSignin[requestType](request);
+    }
+</script>
+
+<!-- Main script for handling various OTP-less actions -->
+<script>
+
+    // This function is called when an event happens in the OTP-less SDK
+    const callback = function(eventCallback) {
+
+        // Log the event data for debugging
+        console.log(eventCallback)
+        console.log({ eventCallback: eventCallback.response });
+        const response = eventCallback.otplessUser; // Get user info from event callback
+        console.log({ otplessUser: response })
+        alert("User Verified")
+    };
+
+    // Function to start the OTP process with the mobile number entered by the user
+    async function initiate() {
+        const input = document.getElementById('mobile-input'); // Get the phone number input field
+
+        // Call hitOTPlessSdk with request details to start the OTP process
+        const initiate = await hitOTPlessSdk({
+            requestType: "initiate",
+            request: {
+                channel: 'OAUTH',
+                provider: 'WHATSAPP',
+                phone: '9131568042',
+                countryCode: '+91',
+                redirectUri: 'https://otpless-testing.tiiny.site/'
+            }
+        });
+
+        console.log({ initiate: initiate },"Otp Initiated"); // Log the initiation response
+
+        // Show the OTP input section after initiation
+        const otpSection = document.getElementById('otp-section');
+        otpSection.style.display = "block";
+    }
+
+    // Function to verify the OTP entered by the user
+    async function verify() {
+        const mobileInput = document.getElementById('mobile-input'); // Get phone number input
+        const otpInput = document.getElementById('otp-input'); // Get OTP input
+
+        // Call hitOTPlessSdk with request details to verify the OTP
+        const verify = await hitOTPlessSdk({
+            requestType: "verify",
+            request: {
+                channel: 'PHONE',
+                phone: mobileInput.value, // Use the entered phone number
+                otp: otpInput.value, // Use the entered OTP
+                countryCode: "+91" // Country code for India
+            }
+        });
+        const res  = {verify}.verify.success
+        console.log(res)
+        console.log({ verify: verify }); // Log the verification response
+        if (res){
+            alert("Otp Verified Succesfully")
+            document.getElementById('otp-input').value('')
+        }
+        else {
+            alert("Invalid Otp")
+            document.getElementById('otp-input').value('')
+        }
+    }
+
+</script>
+
+</html>
